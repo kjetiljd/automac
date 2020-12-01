@@ -1,0 +1,184 @@
+# Prereqs:
+#     Run ./bootstrap.sh
+#
+# Then you can run this playbook with:
+#     ansible-playbook -Kv playbook.yml
+#
+# Ansible User Guide:
+#    https://docs.ansible.com/ansible/2.9/user_guide/index.html
+# Ansible module index:
+#    https://docs.ansible.com/ansible/2.9/modules/modules_by_category.html
+#
+# Note: Changes are afoot: https://www.ansible.com/blog/thoughts-on-restructuring-the-ansible-project
+
+- hosts: localhost
+  vars:
+    ansible_python_interpreter: "/usr/local/bin/python3"
+
+  roles:
+    - zsh
+    - fonts
+    - homebrew
+
+  tasks:
+  - name: install wget with Homebrew
+    homebrew:
+      name: wget
+
+  - name: install tools with {{ ansible_pkg_mgr }} (cross-platform)
+    package:
+      "{{ item }}"
+    with_items:
+     - tree
+     - autojump
+
+
+  - name: tldr repo
+    homebrew_tap:
+      name: tldr-pages/tldr
+
+  - name: install tldr
+    homebrew:
+      name: tldr
+
+
+  - name: install homebrew applications (casks)
+    homebrew_cask:
+      name: "{{ item }}"
+      accept_external_apps: yes
+    with_items:
+      - divvy
+      - flycut
+
+  - name: remove obsolete applications
+    homebrew_cask:
+      name: "{{ item }}"
+      state: absent
+    with_items:
+      - jumpcut
+      - rightzoom
+
+  # https://docs.ansible.com/ansible/2.9/modules/modules_by_category.html
+
+  - name: install Mac App Store CLI
+    homebrew:
+      name: mas
+
+  - name: install apps from Mac App Store
+    shell: "mas list | grep {{ item }} || mas search {{ item }} | grep {{ item }} | awk '{print $1}' | xargs mas install"
+    args:
+        executable: /bin/bash
+    with_items:
+      - Amphetamine
+
+  - name: install a decent browser or two
+    homebrew_cask: name={{ item }}
+    ignore_errors: yes
+    with_items:
+     - firefox
+     - brave-browser
+
+  - name: add firefox to path
+    become: true
+    lineinfile: >
+      dest=/etc/paths.d/70-firefox
+      line=/opt/homebrew-cask/Caskroom/firefox/latest/Firefox.app/Contents/MacOS
+      regexp=.*firefox.*
+      mode=0644
+      create=yes
+
+
+  - name: install atom
+    homebrew_cask:
+      name: atom
+    when: ansible_system == 'Darwin'
+
+  - name: install atom on linux
+    yum:
+      name: https://github.com/atom/atom/releases/download/v1.32.2/atom.x86_64.rpm
+    become: true
+    when: ansible_pkg_mgr == 'yum'
+
+
+  - name: install common tools with {{ ansible_pkg_mgr }}
+    become: "{{ ansible_system != 'Darwin' }}"
+    package:
+      name: "{{ item }}"
+    with_items:
+     - httpie
+     - "{{ 'ag' if (ansible_pkg_mgr == 'Homebrew') else 'the_silver_searcher' }}"
+
+
+  - name: Make hidden files visible
+    osx_defaults:
+      domain: com.apple.finder
+      key: AppleShowAllFiles
+      type: bool
+      value: true
+      state: present
+    register: default_set_visible
+
+  - name: Make all extensions visible
+    osx_defaults:
+      domain: NSGlobalDomain
+      key: AppleShowAllExtensions
+      type: bool
+      value: true
+      state: present
+    register: default_set_extension
+
+  - name: restart Finder
+    command: killall Finder
+    when: default_set_visible.changed or default_set_extension.changed
+
+
+#     - shell-config
+#     - perfectly_brewed
+#     - os-adjustments
+# #    - cloudy
+#     - personal-bin
+#     - cli-tools
+#     - zshell
+#     - app-storable
+#     - productivity
+# #    - msoffice
+#     - atomic
+# #    - collaborative
+#     - a_more_usable_ui
+# #    - remoting
+#     - fonts
+#     - git-mods
+#     - idea
+#     - java-development
+#     - altident
+#     - remarkable
+#     - nav
+# #    - os-tools
+# #    - cronable
+# #    - salty
+# #    - asciidoc
+#     - dockered
+# #    - browsers_and_tweaks
+# #    - sublime
+# #    - emacs
+# #    - r-development
+# #    - machine-learning
+# #    - app-engine-development
+#     - groovy-development
+# #    - android-development
+# #    - kotlin-development
+# #    - scala-development
+#     - clojure-development
+# #    - golang-development
+#     - js-development
+#     - python-development
+# #    - ruby-development
+# #    - my-sequel
+#     - postgresql-y
+#     - dockered_sonarqube
+# #    - screencasting
+# #    - ipad-integration
+# #    - steamy
+# #    - vagrantready
+# #    - spotify
+# #    - experimental

@@ -5,11 +5,10 @@
 #     ansible-playbook -Kv playbook.yml
 #
 # Ansible User Guide:
-#    https://docs.ansible.com/ansible/2.9/user_guide/index.html
-# Ansible module index:
-#    https://docs.ansible.com/ansible/2.9/modules/modules_by_category.html
+#    https://docs.ansible.com/ansible/latest/user_guide/index.html
+# Ansible "plugin" index:
+#    https://docs.ansible.com/ansible/latest/collections/all_plugins.html
 #
-# Note: Changes are afoot: https://www.ansible.com/blog/thoughts-on-restructuring-the-ansible-project
 
 - hosts: localhost
   vars:

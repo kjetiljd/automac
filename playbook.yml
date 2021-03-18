@@ -11,6 +11,8 @@
 #
 
 - hosts: localhost
+  vars:
+    ansible_pkg_mgr: Homebrew
 
   roles:
     - zsh
